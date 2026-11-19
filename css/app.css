@@ -173,6 +173,10 @@ textarea { resize: vertical; line-height: 1.5; }
 .meter i { background: var(--stop); left: auto; right: 0; }
 .meter.big { height: 14px; background: repeating-linear-gradient(90deg, var(--sheet-soft) 0 22px, #e9edf1 22px 24px); }
 .meter.big span { background: var(--ink); }
+.eta { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-top: -6px; }
+#run-percent { font-weight: 720; font-feature-settings: 'tnum'; }
+#run-eta { color: var(--graphite); font-size: 14px; font-feature-settings: 'tnum'; }
+#run-eta strong { color: var(--ink); font-weight: 700; }
 .figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--rule); }
 .figures div { padding: 12px 0 0; }
 .figures div + div { padding-left: 16px; border-left: 1px solid var(--rule); }
