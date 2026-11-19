@@ -163,7 +163,8 @@
               <p class="run-count"><strong id="run-done">0</strong><span id="run-of">of 0 done</span></p>
               <span class="pill" id="run-status"></span>
             </div>
-            <div class="meter big"><span id="run-bar"></span><i id="run-bar-failed"></i></div>
+            <div class="meter big" role="progressbar" aria-labelledby="run-percent" id="run-meter"><span id="run-bar"></span><i id="run-bar-failed"></i></div>
+            <div class="eta"><p id="run-percent"></p><p id="run-eta"></p></div>
             <dl class="figures">
               <div><dt>Waiting</dt><dd id="fig-pending">0</dd></div>
               <div><dt>Generating</dt><dd id="fig-generating">0</dd></div>
