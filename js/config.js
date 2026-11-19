@@ -3,7 +3,7 @@
 // Shared Pollinations key used when a visitor has not added their own in Settings.
 // Use a PUBLISHABLE key only (starts with pk_), from enter.pollinations.ai.
 // Never put a secret key (sk_) here: everyone who opens the website can read this file.
-export const DEFAULT_POLLINATIONS_KEY = '';
+export const DEFAULT_POLLINATIONS_KEY = 'sk_hjZdFAU5MNeeZCrv67K1BsXTGR5PdXCT';
 
 // The visitor's own key wins; otherwise the shared publishable key, if it is valid.
 export function pollinationsKey(keys = {}) {
