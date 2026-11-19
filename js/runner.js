@@ -84,7 +84,7 @@ export async function startBatch({ settings, prompts }, preview) {
   const now = Date.now();
   const project = {
     id: crypto.randomUUID(), settings, folder, createdAt: now, updatedAt: now, status: 'running', reason: '',
-    preview: Boolean(preview), selection: preview ? [prompts[0].number] : null, rateHits: 0,
+    preview: Boolean(preview), selection: preview ? [prompts[0].number] : null, rateHits: 0, runStartedAt: now, recentFinishes: [],
     counts: Object.fromEntries(JOB_STATES.map(state => [state, state === 'pending' ? prompts.length : 0]))
   };
   await store.createProject(project, prompts);
@@ -129,6 +129,8 @@ export async function resume(id) {
     record.status = 'running';
     record.reason = '';
     record.rateHits = 0;
+    record.runStartedAt = Date.now();
+    record.recentFinishes = [];
     if (record.previewFile) record.preview = false;
     if (!record.preview || !record.selection?.length) record.selection = null;
   });
@@ -158,6 +160,8 @@ export async function retry(id, numbers, skip = false) {
       record.reason = '';
       record.rateHits = 0;
       record.selection = numbers ? [...result.changed].sort((a, b) => a - b) : null;
+      record.runStartedAt = Date.now();
+      record.recentFinishes = [];
     } else if (skip && !ACTIVE.has(record.status) && !record.counts.pending && !record.counts.failed) {
       record.status = 'completed';
       record.reason = record.fallbackNote || '';
@@ -183,6 +187,8 @@ export async function redo(id, numbers) {
     record.status = 'running';
     record.reason = '';
     record.selection = [...result.changed].sort((a, b) => a - b);
+    record.runStartedAt = Date.now();
+    record.recentFinishes = [];
   });
   cooldownUntil = 0;
   changed();
@@ -329,6 +335,7 @@ async function finish(id, number, attempt, engine, { blob, thumb, filename, inFo
       delete item.error;
       jobState(record, item, 'completed');
       record.rateHits = 0;
+      record.recentFinishes = [...(record.recentFinishes || []), Date.now()].slice(-15);
       if (record.reason?.startsWith('Rate limit')) record.reason = '';
       if (record.preview && !record.previewNumber) { record.previewNumber = number; record.previewFile = true; }
     });

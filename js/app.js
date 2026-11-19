@@ -251,6 +251,65 @@ async function start(preview) {
   review();
 }
 
+/* ---------- Progress and time left ---------- */
+function formatDuration(ms) {
+  const seconds = Math.max(0, ms / 1000);
+  if (seconds < 60) return 'less than a minute';
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} hr ${rest} min` : `${hours} hr`;
+}
+
+function estimate(project) {
+  const { counts, settings } = project;
+  const processed = counts.completed + counts.failed + counts.skipped;
+  const percent = settings.total ? Math.floor((processed / settings.total) * 100) : 0;
+  const left = counts.pending + counts.generating;
+  const running = ACTIVE.has(project.status) || runner.isRunning(project.id);
+  const finishes = project.recentFinishes || [];
+  const now = Date.now();
+  let perImage = null;
+  if (finishes.length >= 2) perImage = (finishes.at(-1) - finishes[0]) / (finishes.length - 1);
+  else if (finishes.length === 1 && project.runStartedAt) {
+    const single = settings.engine === 'flow' || (settings.engine === 'pollinations' && !keys.pollinations);
+    perImage = (finishes[0] - project.runStartedAt) / (single ? 1 : settings.workers || 1);
+  }
+  let ms = null;
+  if (!left) ms = 0;
+  else if (perImage) {
+    ms = left * perImage;
+    if (running) ms = Math.max(ms - (now - finishes.at(-1)), perImage * 0.5);
+  }
+  return { percent, left, running, ms };
+}
+
+function renderEta(project) {
+  if (!project) { document.title = `${$('view-' + view).querySelector('h1').textContent} | Image Batch Studio`; return; }
+  const { percent, left, running, ms } = estimate(project);
+  const percentText = `${percent}% done, ${100 - percent}% to go`;
+  let etaText;
+  if (!left) etaText = project.status === 'completed' ? 'All scenes processed.' : 'Nothing left to generate.';
+  else if (ms == null) etaText = running ? 'Estimating time left. This appears after the first images finish.' : `${fmt(left)} ${left === 1 ? 'scene' : 'scenes'} left.`;
+  else if (running) {
+    const end = new Date(Date.now() + ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    etaText = ms < 60_000 ? `<strong>Less than a minute</strong> left. Should finish around ${end}.` :
+      `About <strong>${formatDuration(ms)}</strong> left. Should finish around ${end}.`;
+  } else etaText = ms < 60_000 ? 'Less than a minute of work left when you resume.' : `About <strong>${formatDuration(ms)}</strong> of work left when you resume.`;
+  if (view === 'queue' && active?.id === project.id) {
+    $('run-percent').textContent = percentText;
+    $('run-eta').innerHTML = etaText;
+    $('run-meter').setAttribute('aria-valuenow', String(percent));
+    $('run-meter').setAttribute('aria-valuemin', '0');
+    $('run-meter').setAttribute('aria-valuemax', '100');
+  }
+  if (running) {
+    $('rail-run-count').textContent = !ms ? `${percent}% done` : ms < 60_000 ? `${percent}% done, under a minute left` : `${percent}% done, about ${formatDuration(ms)} left`;
+    document.title = `(${percent}%) ${project.settings.name} | Image Batch Studio`;
+  } else document.title = `${$('view-' + view).querySelector('h1').textContent} | Image Batch Studio`;
+}
+
 /* ---------- Queue ---------- */
 function tabs(container, items, selected, onSelect) {
   container.replaceChildren(...items.map(([value, label, count]) => el('button', {
@@ -300,6 +359,7 @@ async function renderQueue() {
   $('fig-failed').textContent = fmt(counts.failed);
   $('fig-engine').textContent = `${ENGINES[settings.engine].name}, ${modelOf(settings)}`;
   $('fig-engine').title = $('fig-engine').textContent;
+  renderEta(project);
   $('run-reason').hidden = !project.reason;
   $('run-reason').textContent = project.reason || '';
 
@@ -538,6 +598,7 @@ async function renderRail() {
     $('rail-run-count').textContent = `${fmt(counts.completed)} of ${fmt(settings.total)} done`;
     $('nav-queue').textContent = fmt(counts.pending + counts.generating);
   }
+  renderEta(project);
   void keepAwake(running);
 }
 
@@ -714,6 +775,7 @@ async function init() {
   });
   onHelper(() => renderHelper());
   setInterval(() => void refreshHelper(), 20_000);
+  setInterval(() => { if (active && (ACTIVE.has(active.status) || runner.isRunning(active.id))) renderEta(active); }, 5000);
   route();
   void refreshHelper();
 }
