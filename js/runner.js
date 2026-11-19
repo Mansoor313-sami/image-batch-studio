@@ -1,9 +1,10 @@
 // The batch queue. Runs in the open page: parallel workers, rate-limit waits, retries and engine fallback.
-import * as store from './store.js?v=3';
-import { ACTIVE, ENGINES, JOB_STATES, StudioError, imageExtension, safeSegment, sceneName } from './model.js?v=3';
-import { POLLINATIONS_ANON_GAP, gemini, pollinations, thumbnail } from './engines.js?v=3';
-import { flowImage, refreshHelper } from './bridge.js?v=3';
-import { writeImage } from './folder.js?v=3';
+import * as store from './store.js?v=4';
+import { ACTIVE, ENGINES, JOB_STATES, StudioError, imageExtension, safeSegment, sceneName } from './model.js?v=4';
+import { POLLINATIONS_ANON_GAP, gemini, pollinations, thumbnail } from './engines.js?v=4';
+import { flowImage, refreshHelper } from './bridge.js?v=4';
+import { writeImage } from './folder.js?v=4';
+import { pollinationsKey } from './config.js?v=4';
 
 const LIMIT = new Set(['quota', 'rate', 'credits']);
 const TRANSIENT = new Set(['network', 'timeout', 'generation']);
@@ -256,7 +257,7 @@ async function drive() {
   if (now < cooldownUntil) { kick(cooldownUntil - now + 50); return; }
   const engine = project.settings.engine;
   const keys = (await store.getMeta('keys')) || {};
-  const anonymous = engine === 'pollinations' && !keys.pollinations;
+  const anonymous = engine === 'pollinations' && !pollinationsKey(keys);
   const limit = engine === 'flow' || anonymous ? 1 : project.settings.workers || 1;
   if (anonymous && running === 0 && now - lastAnonymous < POLLINATIONS_ANON_GAP) {
     kick(POLLINATIONS_ANON_GAP - (now - lastAnonymous) + 50);
@@ -308,7 +309,7 @@ async function run(id, number, attempt, engine) {
       const references = [settings.characterOn && refs.character, settings.styleOn && refs.style].filter(item => item instanceof Blob);
       outcome.blob = await gemini({ key: keys.gemini, model: settings.geminiModel, ratio: settings.ratio, text: job.text, references });
     } else {
-      outcome.blob = await pollinations({ key: keys.pollinations, model: settings.pollinationsModel, ratio: settings.ratio, text: job.text });
+      outcome.blob = await pollinations({ key: pollinationsKey(keys), model: settings.pollinationsModel, ratio: settings.ratio, text: job.text });
     }
     outcome.thumb = await thumbnail(outcome.blob);
     outcome.filename = `${base}.${imageExtension(outcome.blob.type)}`;

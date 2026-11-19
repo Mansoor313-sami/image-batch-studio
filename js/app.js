@@ -1,12 +1,13 @@
-import * as store from './store.js?v=3';
-import * as runner from './runner.js?v=3';
+import * as store from './store.js?v=4';
+import * as runner from './runner.js?v=4';
 import {
   ACTIVE, ENGINES, FLOW_MODELS, GEMINI_MODELS, POLLINATIONS_MODELS, RATIOS, csv, imageExtension, initialDraft,
   labelStatus, modelOf, parsePrompts, safeSegment, sceneName, validateDraft
-} from './model.js?v=3';
-import { buildZip } from './zip.js?v=3';
-import { callHelper, helperState, onHelper, refreshHelper } from './bridge.js?v=3';
-import { chooseFolder, ensureFolderAccess, folderSupported, forgetFolder, savedFolder } from './folder.js?v=3';
+} from './model.js?v=4';
+import { buildZip } from './zip.js?v=4';
+import { callHelper, helperState, onHelper, refreshHelper } from './bridge.js?v=4';
+import { hasSharedPollinationsKey, pollinationsKey } from './config.js?v=4';
+import { chooseFolder, ensureFolderAccess, folderSupported, forgetFolder, savedFolder } from './folder.js?v=4';
 
 const $ = id => document.getElementById(id);
 const VIEWS = ['new', 'queue', 'gallery', 'projects', 'settings'];
@@ -140,7 +141,8 @@ function engineStatus(engine) {
     return helper.flow ? ['Ready', 'ok'] : ['Open a Flow project', 'attn'];
   }
   if (engine === 'gemini') return keys.gemini ? ['Key added', 'ok'] : ['Needs API key', 'attn'];
-  return keys.pollinations ? ['Key added', 'ok'] : ['Free', ''];
+  if (keys.pollinations) return ['Key added', 'ok'];
+  return hasSharedPollinationsKey() ? ['Fast, free', 'ok'] : ['Free', ''];
 }
 
 function renderEngines() {
@@ -157,7 +159,7 @@ function renderEngines() {
   let hint = '';
   if (draft.engine === 'flow') hint = 'Flow makes one image at a time in your open Flow project. Every image must cost 0 credits, or the batch pauses.';
   if (draft.engine === 'gemini' && !keys.gemini) hint = 'Add your Gemini API key in Settings to use this engine.';
-  if (draft.engine === 'pollinations' && !keys.pollinations) hint = 'Without a key: one image about every 45 seconds at reduced size. Add a free key in Settings for full speed.';
+  if (draft.engine === 'pollinations' && !pollinationsKey(keys)) hint = 'Without a key: one image about every 45 seconds at reduced size. Add a free key in Settings for full speed.';
   $('engine-hint').textContent = hint;
   $('engine-hint').hidden = !hint;
 }
@@ -273,7 +275,7 @@ function estimate(project) {
   let perImage = null;
   if (finishes.length >= 2) perImage = (finishes.at(-1) - finishes[0]) / (finishes.length - 1);
   else if (finishes.length === 1 && project.runStartedAt) {
-    const single = settings.engine === 'flow' || (settings.engine === 'pollinations' && !keys.pollinations);
+    const single = settings.engine === 'flow' || (settings.engine === 'pollinations' && !pollinationsKey(keys));
     perImage = (finishes[0] - project.runStartedAt) / (single ? 1 : settings.workers || 1);
   }
   let ms = null;
@@ -544,6 +546,9 @@ async function renderSettings() {
   $('folder-hint').textContent = folderSupported() ? 'Write each image into a folder on your computer as soon as it is finished.' :
     'This browser cannot write to folders. Use Chrome or Edge, or download the ZIP.';
   $('folder-name').textContent = handle ? `Saving into: ${handle.name}` : '';
+  $('poll-hint').textContent = hasSharedPollinationsKey()
+    ? 'This website includes a shared key, so Pollinations is fast without your own. Add your own key to use your own limits instead.'
+    : 'Without a key, Pollinations makes one smaller image about every 45 seconds. A free key unlocks more models, full size and parallel images.';
   $('forget-folder').hidden = !handle;
   $('choose-folder').textContent = handle ? 'Change folder' : 'Choose folder';
 }
