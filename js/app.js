@@ -1,12 +1,12 @@
-import * as store from './store.js';
-import * as runner from './runner.js';
+import * as store from './store.js?v=3';
+import * as runner from './runner.js?v=3';
 import {
   ACTIVE, ENGINES, FLOW_MODELS, GEMINI_MODELS, POLLINATIONS_MODELS, RATIOS, csv, imageExtension, initialDraft,
   labelStatus, modelOf, parsePrompts, safeSegment, sceneName, validateDraft
-} from './model.js';
-import { buildZip } from './zip.js';
-import { callHelper, helperState, onHelper, refreshHelper } from './bridge.js';
-import { chooseFolder, ensureFolderAccess, folderSupported, forgetFolder, savedFolder } from './folder.js';
+} from './model.js?v=3';
+import { buildZip } from './zip.js?v=3';
+import { callHelper, helperState, onHelper, refreshHelper } from './bridge.js?v=3';
+import { chooseFolder, ensureFolderAccess, folderSupported, forgetFolder, savedFolder } from './folder.js?v=3';
 
 const $ = id => document.getElementById(id);
 const VIEWS = ['new', 'queue', 'gallery', 'projects', 'settings'];

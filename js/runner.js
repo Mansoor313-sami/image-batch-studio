@@ -1,9 +1,9 @@
 // The batch queue. Runs in the open page: parallel workers, rate-limit waits, retries and engine fallback.
-import * as store from './store.js';
-import { ACTIVE, ENGINES, JOB_STATES, StudioError, imageExtension, safeSegment, sceneName } from './model.js';
-import { POLLINATIONS_ANON_GAP, gemini, pollinations, thumbnail } from './engines.js';
-import { flowImage, refreshHelper } from './bridge.js';
-import { writeImage } from './folder.js';
+import * as store from './store.js?v=3';
+import { ACTIVE, ENGINES, JOB_STATES, StudioError, imageExtension, safeSegment, sceneName } from './model.js?v=3';
+import { POLLINATIONS_ANON_GAP, gemini, pollinations, thumbnail } from './engines.js?v=3';
+import { flowImage, refreshHelper } from './bridge.js?v=3';
+import { writeImage } from './folder.js?v=3';
 
 const LIMIT = new Set(['quota', 'rate', 'credits']);
 const TRANSIENT = new Set(['network', 'timeout', 'generation']);

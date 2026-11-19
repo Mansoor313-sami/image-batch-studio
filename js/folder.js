@@ -1,6 +1,6 @@
 // Optional: write each finished image straight into a folder the user picks (Chrome and Edge).
-import { getMeta, putMeta, deleteMeta } from './store.js';
-import { safeSegment } from './model.js';
+import { getMeta, putMeta, deleteMeta } from './store.js?v=3';
+import { safeSegment } from './model.js?v=3';
 
 export const folderSupported = () => typeof window.showDirectoryPicker === 'function';
 

@@ -1,5 +1,5 @@
 // Image engines that run without a Flow tab: Gemini API (user's key) and Pollinations.
-import { RATIO_SIZES, StudioError } from './model.js';
+import { RATIO_SIZES, StudioError } from './model.js?v=3';
 
 const TIMEOUT = 150_000;
 export const POLLINATIONS_ANON_GAP = 46_000;

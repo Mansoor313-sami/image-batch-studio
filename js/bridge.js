@@ -1,5 +1,5 @@
 // Talks to the Image Batch Studio Helper extension, which runs Google Flow in the user's browser.
-import { StudioError } from './model.js';
+import { StudioError } from './model.js?v=3';
 
 const pending = new Map();
 let helper = null;
