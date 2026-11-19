@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="ibs-studio" content="1">
+  <meta name="description" content="Turn a full video script into numbered images in one batch. Google Flow, Gemini or Pollinations, with retry, gallery and ZIP download.">
+  <title>Image Batch Studio</title>
+  <link rel="icon" href="assets/icon128.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="shell">
+    <aside class="rail">
+      <a class="brand" href="#new">
+        <img src="assets/icon128.png" alt="" width="34" height="34">
+        <span><strong>Image Batch Studio</strong><small>by Muskan Malik</small></span>
+      </a>
+      <nav aria-label="Main">
+        <a href="#new" data-nav="new">New batch</a>
+        <a href="#queue" data-nav="queue">Queue <span class="nav-count" id="nav-queue" hidden></span></a>
+        <a href="#gallery" data-nav="gallery">Gallery</a>
+        <a href="#projects" data-nav="projects">Projects</a>
+        <a href="#settings" data-nav="settings">Settings</a>
+      </nav>
+      <div class="rail-run" id="rail-run" hidden>
+        <p id="rail-run-name"></p>
+        <div class="meter"><span id="rail-run-bar"></span></div>
+        <p class="rail-run-count" id="rail-run-count"></p>
+      </div>
+      <div class="rail-foot">
+        <p class="helper-chip" id="helper-chip" data-state="off"><span></span><b id="helper-text">Flow helper not found</b></p>
+      </div>
+    </aside>
+
+    <main id="main" tabindex="-1">
+      <!-- New batch -->
+      <section class="view" id="view-new" aria-labelledby="new-title">
+        <header class="view-head">
+          <div>
+            <h1 id="new-title">New batch</h1>
+            <p class="lede">Paste the whole script. Every line or numbered scene becomes one image, named in order.</p>
+          </div>
+        </header>
+
+        <div class="compose">
+          <div class="compose-main">
+            <div class="sheet script">
+              <div class="script-bar">
+                <label for="prompts">Script</label>
+                <div class="bar-actions">
+                  <button type="button" class="ghost" id="import-file">Import TXT</button>
+                  <input type="file" id="prompt-file" accept=".txt,text/plain" hidden>
+                  <button type="button" class="ghost" id="sample-10">Try 10 samples</button>
+                  <button type="button" class="ghost" id="sample-1000">Load 1,000 demo</button>
+                </div>
+              </div>
+              <textarea id="prompts" spellcheck="false" aria-describedby="prompts-help" placeholder="Scene 1: A lighthouse on a rocky cliff at sunset&#10;Scene 2: A fishing boat leaving the harbour at dawn&#10;&#10;or one prompt per line, or 1. 2. 3. numbering"></textarea>
+              <p class="script-foot" id="prompts-help"><span id="prompt-count">No scenes yet</span><span id="prompt-warning" class="warn"></span></p>
+            </div>
+            <div class="strip" id="strip" aria-label="Scene preview" hidden><div class="strip-track" id="strip-track"></div></div>
+
+            <div class="sheet">
+              <h2>Consistency</h2>
+              <p class="hint">Added to every prompt so the same character and look carry across the whole video.</p>
+              <div class="consistency">
+                <div class="consist" id="consist-character">
+                  <label class="switch"><input type="checkbox" id="character-on"><span>Character</span></label>
+                  <textarea id="character" rows="3" placeholder="A young boy with curly brown hair, round glasses and a red hoodie"></textarea>
+                  <div class="ref">
+                    <button type="button" class="ghost small" id="character-pick">Add reference image</button>
+                    <input type="file" id="character-file" accept="image/png,image/jpeg,image/webp" hidden>
+                    <img id="character-thumb" alt="Character reference" hidden>
+                    <button type="button" class="link small" id="character-clear" hidden>Remove</button>
+                  </div>
+                </div>
+                <div class="consist" id="consist-style">
+                  <label class="switch"><input type="checkbox" id="style-on"><span>Style</span></label>
+                  <textarea id="style" rows="3" placeholder="Soft 3D animation, warm lighting, shallow depth of field"></textarea>
+                  <div class="ref">
+                    <button type="button" class="ghost small" id="style-pick">Add reference image</button>
+                    <input type="file" id="style-file" accept="image/png,image/jpeg,image/webp" hidden>
+                    <img id="style-thumb" alt="Style reference" hidden>
+                    <button type="button" class="link small" id="style-clear" hidden>Remove</button>
+                  </div>
+                </div>
+              </div>
+              <p class="hint">Reference images are sent to Gemini. With Flow, add them once in your Flow project using Add ingredients.</p>
+            </div>
+          </div>
+
+          <div class="compose-side">
+            <div class="sheet">
+              <h2>Engine</h2>
+              <div class="engines" role="radiogroup" aria-label="Image engine" id="engines"></div>
+              <div class="engine-fields" id="fields-flow">
+                <label>Flow model<select id="flow-model"></select></label>
+                <label class="switch"><input type="checkbox" id="flow-downloads"><span>Also save Flow originals to Downloads</span></label>
+              </div>
+              <div class="engine-fields" id="fields-gemini">
+                <label>Gemini model<input type="text" id="gemini-model" list="gemini-models" spellcheck="false" autocomplete="off"></label>
+                <datalist id="gemini-models"></datalist>
+              </div>
+              <div class="engine-fields" id="fields-pollinations">
+                <label>Pollinations model<input type="text" id="poll-model" list="poll-models" spellcheck="false" autocomplete="off"></label>
+                <datalist id="poll-models"></datalist>
+              </div>
+              <p class="hint" id="engine-hint"></p>
+            </div>
+
+            <div class="sheet">
+              <h2>Frame</h2>
+              <fieldset class="ratios" id="ratios"><legend>Aspect ratio</legend></fieldset>
+              <div class="pair">
+                <label id="workers-field">Images at once
+                  <span class="stepper"><button type="button" id="workers-down" aria-label="Fewer">−</button><input type="number" id="workers" min="1" max="5"><button type="button" id="workers-up" aria-label="More">+</button></span>
+                </label>
+                <label>Start from scene<input type="number" id="start-from" min="1" placeholder="1" inputmode="numeric"></label>
+              </div>
+              <label class="switch"><input type="checkbox" id="fallback"><span>If Flow or Gemini hits its limit, continue with Pollinations</span></label>
+            </div>
+
+            <div class="sheet">
+              <h2>Output</h2>
+              <label>Project name<input type="text" id="project-name" placeholder="The Lighthouse Keeper" autocomplete="off"></label>
+              <label>File name prefix<input type="text" id="prefix" autocomplete="off"></label>
+              <p class="hint" id="output-hint"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="launch">
+          <p id="launch-summary">Add a script to begin.</p>
+          <div class="launch-actions">
+            <button type="button" class="secondary" id="preview" disabled>Preview first image</button>
+            <button type="button" class="primary" id="start" disabled>Generate all</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Queue -->
+      <section class="view" id="view-queue" aria-labelledby="queue-title" hidden>
+        <header class="view-head">
+          <div>
+            <h1 id="queue-title">Queue</h1>
+            <p class="lede" id="queue-sub">Keep this tab open while a batch runs.</p>
+          </div>
+          <div class="head-actions" id="queue-actions"></div>
+        </header>
+        <div id="queue-empty" class="empty" hidden>
+          <h2>Nothing in the queue</h2>
+          <p>Start a batch from New batch, or open an older one from Projects.</p>
+          <a class="button primary" href="#new">New batch</a>
+        </div>
+        <div id="queue-body" hidden>
+          <div class="sheet run">
+            <div class="run-top">
+              <p class="run-count"><strong id="run-done">0</strong><span id="run-of">of 0 done</span></p>
+              <span class="pill" id="run-status"></span>
+            </div>
+            <div class="meter big"><span id="run-bar"></span><i id="run-bar-failed"></i></div>
+            <dl class="figures">
+              <div><dt>Waiting</dt><dd id="fig-pending">0</dd></div>
+              <div><dt>Generating</dt><dd id="fig-generating">0</dd></div>
+              <div><dt>Failed</dt><dd id="fig-failed">0</dd></div>
+              <div><dt>Engine</dt><dd id="fig-engine"></dd></div>
+            </dl>
+            <p class="notice" id="run-reason" hidden></p>
+            <div class="preview-shot" id="preview-shot" hidden></div>
+            <div class="switcher" id="switcher" hidden>
+              <label>Engine for the remaining scenes<select id="switch-engine"></select></label>
+              <button type="button" class="secondary" id="switch-go">Switch engine</button>
+            </div>
+          </div>
+          <div class="sheet list-sheet">
+            <div class="list-head">
+              <div class="tabs" role="tablist" aria-label="Filter scenes" id="queue-tabs"></div>
+            </div>
+            <ol class="scenes" id="scene-list"></ol>
+            <div class="pager" id="scene-pager" hidden>
+              <button type="button" class="ghost" id="scene-prev">Previous</button>
+              <span id="scene-range"></span>
+              <button type="button" class="ghost" id="scene-next">Next</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Gallery -->
+      <section class="view" id="view-gallery" aria-labelledby="gallery-title" hidden>
+        <header class="view-head">
+          <div>
+            <h1 id="gallery-title">Gallery</h1>
+            <p class="lede" id="gallery-sub">Finished frames in scene order.</p>
+          </div>
+          <div class="head-actions">
+            <button type="button" class="secondary" id="gallery-retry" hidden>Retry failed</button>
+            <button type="button" class="primary" id="gallery-zip" disabled>Download all as ZIP</button>
+          </div>
+        </header>
+        <div class="tabs" role="tablist" aria-label="Filter images" id="gallery-tabs"></div>
+        <div class="contact" id="contact"></div>
+        <div class="pager" id="gallery-pager" hidden>
+          <button type="button" class="ghost" id="gallery-prev">Previous</button>
+          <span id="gallery-range"></span>
+          <button type="button" class="ghost" id="gallery-next">Next</button>
+        </div>
+      </section>
+
+      <!-- Projects -->
+      <section class="view" id="view-projects" aria-labelledby="projects-title" hidden>
+        <header class="view-head">
+          <div>
+            <h1 id="projects-title">Projects</h1>
+            <p class="lede">Every batch is saved in this browser with its images, until you delete it.</p>
+          </div>
+        </header>
+        <div id="project-list"></div>
+      </section>
+
+      <!-- Settings -->
+      <section class="view" id="view-settings" aria-labelledby="settings-title" hidden>
+        <header class="view-head">
+          <div>
+            <h1 id="settings-title">Settings</h1>
+            <p class="lede">Keys and folders are stored only in this browser.</p>
+          </div>
+        </header>
+        <div class="settings">
+          <div class="sheet">
+            <h2>Google Flow helper</h2>
+            <p class="helper-status" id="helper-status"></p>
+            <ol class="steps">
+              <li><a href="helper-extension.zip" download>Download the helper extension</a> and unzip it.</li>
+              <li>Open <b>chrome://extensions</b> (or <b>edge://extensions</b>), turn on Developer mode, and choose Load unpacked.</li>
+              <li>Open <a href="https://flow.google.com/" target="_blank" rel="noopener">Google Flow</a> in another tab, sign in, and open a project.</li>
+              <li>Reload this page. The status above turns green.</li>
+            </ol>
+            <div class="row"><button type="button" class="secondary" id="open-flow">Open Google Flow</button><button type="button" class="ghost" id="check-helper">Check again</button></div>
+          </div>
+          <div class="sheet">
+            <h2>API keys</h2>
+            <label>Gemini API key<input type="password" id="gemini-key" autocomplete="off" placeholder="From aistudio.google.com"></label>
+            <p class="hint">Google's free tier often allows no image requests, so the Gemini engine usually needs billing on this key.</p>
+            <label>Pollinations key (optional)<input type="password" id="poll-key" autocomplete="off" placeholder="pk_ or sk_ key from enter.pollinations.ai"></label>
+            <p class="hint">Without a key, Pollinations makes one smaller image about every 45 seconds. A free key unlocks more models, full size and parallel images.</p>
+          </div>
+          <div class="sheet">
+            <h2>Save to a folder</h2>
+            <p class="hint" id="folder-hint">Write each image into a folder on your computer as soon as it is finished.</p>
+            <p class="folder-name" id="folder-name"></p>
+            <div class="row"><button type="button" class="secondary" id="choose-folder">Choose folder</button><button type="button" class="link" id="forget-folder" hidden>Stop saving to folder</button></div>
+          </div>
+          <div class="sheet danger-zone">
+            <h2>Clear all data</h2>
+            <p class="hint">Deletes every project, image, key and setting stored by this website in this browser.</p>
+            <button type="button" class="danger" id="clear-all">Clear all data</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="viewer" id="viewer" aria-labelledby="viewer-title">
+    <div class="viewer-frame"><img id="viewer-image" alt=""></div>
+    <div class="viewer-side">
+      <div class="viewer-top">
+        <h2 id="viewer-title"></h2>
+        <button type="button" class="ghost" id="viewer-close">Close</button>
+      </div>
+      <p id="viewer-prompt" class="viewer-prompt"></p>
+      <p id="viewer-meta" class="hint"></p>
+      <div class="row">
+        <button type="button" class="primary" id="viewer-download">Download image</button>
+        <button type="button" class="secondary" id="viewer-redo">Make again</button>
+      </div>
+      <div class="row viewer-nav">
+        <button type="button" class="ghost" id="viewer-prev">Previous frame</button>
+        <button type="button" class="ghost" id="viewer-next">Next frame</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="confirm" id="confirm" aria-labelledby="confirm-title">
+    <h2 id="confirm-title"></h2>
+    <p id="confirm-text"></p>
+    <div class="row end"><button type="button" class="ghost" id="confirm-cancel">Cancel</button><button type="button" class="danger" id="confirm-ok"></button></div>
+  </dialog>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+</body>
+</html>
