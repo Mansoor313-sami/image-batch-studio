@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/app.css?v=3">
-  <script type="module" src="js/app.js?v=3"></script>
+  <link rel="stylesheet" href="css/app.css?v=4">
+  <script type="module" src="js/app.js?v=4"></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -249,7 +249,7 @@
             <label>Gemini API key<input type="password" id="gemini-key" autocomplete="off" placeholder="From aistudio.google.com"></label>
             <p class="hint">Google's free tier often allows no image requests, so the Gemini engine usually needs billing on this key.</p>
             <label>Pollinations key (optional)<input type="password" id="poll-key" autocomplete="off" placeholder="pk_ or sk_ key from enter.pollinations.ai"></label>
-            <p class="hint">Without a key, Pollinations makes one smaller image about every 45 seconds. A free key unlocks more models, full size and parallel images.</p>
+            <p class="hint" id="poll-hint">Without a key, Pollinations makes one smaller image about every 45 seconds. A free key unlocks more models, full size and parallel images.</p>
           </div>
           <div class="sheet">
             <h2>Save to a folder</h2>
